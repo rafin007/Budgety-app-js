@@ -199,7 +199,7 @@ var UIController = (function() {
             document.querySelector(DOMStrings.expensesLabel).textContent = budgetObj.totalExp;
             
             if (budgetObj.percentage > 0) {
-                document.querySelector(DOMStrings.percentageLabel).textContent = budgetObj.percentage;
+                document.querySelector(DOMStrings.percentageLabel).textContent = budgetObj.percentage + "%";
             }
             else {
                 document.querySelector(DOMStrings.percentageLabel).textContent = "---";
