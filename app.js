@@ -23,7 +23,22 @@ var budgetController = (function() {
         totals: {
             exp: 0,
             inc: 0
-        }
+        },
+        budget: 0,
+        percentage: -1
+    };
+
+    //calculate total for expense and income
+    var calculateTotal = function(type) {
+        
+        var sum = 0;
+
+        data.allItems[type].forEach(function(current) {
+            sum += current.value;
+        });
+
+        data.totals[type] = sum;
+
     };
 
     return {
@@ -57,8 +72,36 @@ var budgetController = (function() {
 
         },
 
-        testing: function() {
-            console.log(data);
+        //handles the budget calculations
+        calculateBudget: function() {
+
+            //calculate the total expense and income
+            calculateTotal('inc');
+            calculateTotal('exp');
+
+            //calculate the budget (income - expense)
+            data.budget = data.totals.inc - data.totals.exp;
+
+            //calculate the percentage of income that is spent
+            if (data.totals.inc > 0) {
+                data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+            }
+            else {
+                data.percentage = -1;
+            }
+
+        },
+
+        //return budget related info
+        getBudget: function() {
+            return {
+
+                budget: data.budget,
+                percentage: data.percentage,
+                totalInc: data.totals.inc,
+                totalExp: data.totals.exp
+
+            };
         }
 
     }
@@ -88,7 +131,7 @@ var UIController = (function() {
 
         addListItem: function(object, type) {
 
-            var html, element;
+            var html, element, newHtml;
 
             //create html placeholder string
             if (type === 'inc') {
@@ -112,11 +155,35 @@ var UIController = (function() {
 
         },
 
+        //clear both description and value field upon entering an entry
+        clearFields: function() {
+            //obvious way
+            /*
+            document.querySelector(DOMStrings.inputDescription).value = "";
+            document.querySelector(DOMStrings.inputValue).value = "";
+
+            document.querySelector(DOMStrings.inputDescription).focus();
+            */
+
+            //efficient way
+            var fields, fieldsArray;
+            
+            fields = document.querySelectorAll(DOMStrings.inputDescription + ", " + DOMStrings.inputValue);
+            fieldsArray = Array.prototype.slice.call(fields);
+
+            fieldsArray.forEach(function(current, index, array) {
+                current.value = "";
+            });
+
+            fieldsArray[0].focus();
+
+        },
+
         getInputs: function() {
             return {
                 type: document.querySelector(DOMStrings.inputType).value,
                 description: document.querySelector(DOMStrings.inputDescription).value,
-                value: document.querySelector(DOMStrings.inputValue).value
+                value: parseFloat(document.querySelector(DOMStrings.inputValue).value)
             };
         }
     };
@@ -138,7 +205,7 @@ var appController = (function(budgetCtrl, UICtrl) {
         //add click event
         document.querySelector(DOMStrings.inputButton).addEventListener('click', ctrlAddItem);
 
-        //add enter event
+        //add enter/return key event
         document.addEventListener('keypress', function(event) {
 
             if (event.keyCode === 13 || event.which === 13) {
@@ -154,12 +221,35 @@ var appController = (function(budgetCtrl, UICtrl) {
         
         //get input from UI
         var inputs = UICtrl.getInputs();
-        
-        //create a new item 
-        var newItem = budgetCtrl.addItem(inputs.type, inputs.description, inputs.value);
 
-        //pass the item to UI
-        UICtrl.addListItem(newItem, inputs.type);
+        if (inputs.description !== "" && !isNaN(inputs.value) && inputs.value > 0) {
+            
+            //create a new item 
+            var newItem = budgetCtrl.addItem(inputs.type, inputs.description, inputs.value);
+    
+            //pass the item to UI
+            UICtrl.addListItem(newItem, inputs.type);
+    
+            //clear the input field
+            UICtrl.clearFields();
+    
+            //update the budget
+            updateBudget();
+        }
+
+    };
+
+    //updates the main budget
+    var updateBudget = function() {
+
+        //calculate the budget
+        budgetCtrl.calculateBudget();
+
+        //get the budget
+        var budget = budgetCtrl.getBudget();
+        console.log(budget);
+
+        //update the budget in UI
 
     };
 
