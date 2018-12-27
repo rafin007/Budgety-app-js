@@ -120,7 +120,11 @@ var UIController = (function() {
         inputValue: '.add__value',
         inputButton: '.add__btn',
         incomeContainer: '.income__list',
-        expensesContainer: '.expenses__list'
+        expensesContainer: '.expenses__list',
+        budgetLabel: '.budget__value',
+        incomeLabel: '.budget__income--value',
+        expensesLabel: '.budget__expenses--value',
+        percentageLabel: '.budget__expenses--percentage'
     };
 
     //return the public methods to expose to other controllers
@@ -185,6 +189,22 @@ var UIController = (function() {
                 description: document.querySelector(DOMStrings.inputDescription).value,
                 value: parseFloat(document.querySelector(DOMStrings.inputValue).value)
             };
+        },
+
+        //display budget to UI
+        displayBudget: function(budgetObj) {
+
+            document.querySelector(DOMStrings.budgetLabel).textContent = budgetObj.budget;
+            document.querySelector(DOMStrings.incomeLabel).textContent = budgetObj.totalInc;
+            document.querySelector(DOMStrings.expensesLabel).textContent = budgetObj.totalExp;
+            
+            if (budgetObj.percentage > 0) {
+                document.querySelector(DOMStrings.percentageLabel).textContent = budgetObj.percentage;
+            }
+            else {
+                document.querySelector(DOMStrings.percentageLabel).textContent = "---";
+            }
+
         }
     };
 
@@ -247,16 +267,24 @@ var appController = (function(budgetCtrl, UICtrl) {
 
         //get the budget
         var budget = budgetCtrl.getBudget();
-        console.log(budget);
 
         //update the budget in UI
+        UICtrl.displayBudget(budget);
 
     };
 
     return {
         //the initialization function
         init: function() {
-            console.log("App has started...")
+            console.log("App has started...");
+            UICtrl.displayBudget({
+
+                budget: 0,
+                percentage: 0,
+                totalInc: 0,
+                totalExp: 0
+
+            });
             setupEventListeners();
         }
     };
