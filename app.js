@@ -119,6 +119,20 @@ var budgetController = (function() {
 
         },
 
+        calculateIndividualExpensePercentage: function(ID) {
+
+            var percentage, expenses = [];
+
+            expenses = data.allItems.exp.map(function (current) {
+                return current.value;
+            });
+    
+            ID > 0 ? percentage = Math.round((expenses[ID]/data.totals.exp) * 100) : percentage = 100;
+    
+            return percentage;
+
+        },
+
         //return budget related info
         getBudget: function() {
             return {
@@ -162,7 +176,7 @@ var UIController = (function() {
         },
 
         //add new row to either income or expense part
-        addListItem: function(object, type) {
+        addListItem: function(object, type, individualExpense) {
 
             var html, element, newHtml;
 
@@ -175,13 +189,17 @@ var UIController = (function() {
             else if (type === 'exp') {
                 element = DOMStrings.expensesContainer;
 
-                html = '<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="far fa-times-circle"></i></button></div></div></div>';
+                html = '<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">%expPercentage%</div><div class="item__delete"><button class="item__delete--btn"><i class="far fa-times-circle"></i></button></div></div></div>';
             }
 
             //replace the html placeholder with actual data
             newHtml = html.replace('%id%', object.id);
             newHtml = newHtml.replace('%description%', object.description);
             newHtml = newHtml.replace('%value%', object.value);
+
+            if (type === 'exp') {
+                newHtml = newHtml.replace('%expPercentage%', individualExpense + "%");
+            }
 
             //put the html in DOM
             document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
@@ -292,9 +310,17 @@ var appController = (function(budgetCtrl, UICtrl) {
             
             //create a new item 
             var newItem = budgetCtrl.addItem(inputs.type, inputs.description, inputs.value);
+
+            var individualExpense;
+
+            if (inputs.type === 'exp') {
+
+                individualExpense = budgetCtrl.calculateIndividualExpensePercentage(newItem.id);
+
+            }
     
             //pass the item to UI
-            UICtrl.addListItem(newItem, inputs.type);
+            UICtrl.addListItem(newItem, inputs.type, individualExpense);
     
             //clear the input field
             UICtrl.clearFields();
@@ -311,7 +337,7 @@ var appController = (function(budgetCtrl, UICtrl) {
         var itemID, splitID, type, ID;
 
         //traverse DOM from the button upto the parent element of the row and get its id
-        itemID = event.target.parentNode.parentNode.parentNode.id;
+        itemID = event.target.parentNode.parentNode.parentNode.parentNode.id;
 
         if (itemID) {
 
