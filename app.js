@@ -191,7 +191,8 @@ var UIController = (function() {
         incomeLabel: '.budget__income--value',
         expensesLabel: '.budget__expenses--value',
         percentageLabel: '.budget__expenses--percentage',
-        container: '.container'
+        container: '.container',
+        expensePercentageLabel: '.item__percentage'
     };
 
     //return the public methods to expose them to other controllers
@@ -284,6 +285,45 @@ var UIController = (function() {
             else {
                 document.querySelector(DOMStrings.percentageLabel).textContent = "---";
             }
+
+        },
+
+        displayPercentages: function(percentages) {
+
+            var fields = document.querySelectorAll(DOMStrings.expensePercentageLabel);
+
+            
+            //complex way, so the next person reviews your code, thinks you're a top notch js developer
+            var nodeListForEach = function(list, callback) {
+
+                for (var i=0; i<list.length; i++) {
+                    callback(list[i], i);
+                }
+
+            }
+
+            nodeListForEach(fields, function(current, index) {
+                
+                if (percentages[index] > 0) {
+                    current.textContent = percentages[index] + "%";
+                }
+                else {
+                    current.textContent = "---";
+                }
+
+            });
+
+            //obvious way but then it wouldn't be fun, would it? -_-
+            // for (var i=0; i<fields.length; i++) {
+
+            //     if (percentages[i] > 0) {
+            //         fields[i].textContent = percentages[i] + "%";
+            //     }
+            //     else {
+            //         fields[i].textContent = "---";
+            //     }
+
+            // }
 
         }
     };
@@ -403,7 +443,7 @@ var appController = (function(budgetCtrl, UICtrl) {
         var percentages = budgetCtrl.getPercentages();
 
         //display to the UI
-        console.log(percentages);
+        UICtrl.displayPercentages(percentages);
 
     };
 
