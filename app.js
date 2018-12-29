@@ -7,7 +7,25 @@ var budgetController = (function() {
         this.id = id;
         this.description = description;
         this.value = value;
+        this.percentage = -1;
     };
+
+    //calculate individual percentage
+    Expense.prototype.calculatePercentage = function(totalIncome) {
+
+        if (totalIncome > 0) {
+            this.percentage = Math.round((this.value / totalIncome) * 100);
+        }
+        else {
+            this.percentage = -1;
+        }
+
+    };
+
+    //return single percentage
+    Expense.prototype.getPercentage = function() {
+        return this.percentage;
+    }
 
     var Income = function(id, description, value) {
         this.id = id;
@@ -84,7 +102,7 @@ var budgetController = (function() {
             //find the item to delete by ID
             index = ids.indexOf(ID);
 
-            //if the id exist then delete it
+            //if the id exists then delete it
             if (index !== -1) {
 
                 data.allItems[type].splice(index, 1);
@@ -93,6 +111,7 @@ var budgetController = (function() {
 
         },
 
+        //testing
         testing: function() {
 
             console.log(data);
@@ -119,17 +138,12 @@ var budgetController = (function() {
 
         },
 
-        calculateIndividualExpensePercentage: function(ID) {
+        //calculate percentage after adding every income/expense
+        calculatePercentages: function() {
 
-            var percentage, expenses = [];
-
-            expenses = data.allItems.exp.map(function (current) {
-                return current.value;
+            data.allItems.exp.forEach(function(current) {
+                current.calculatePercentage(data.totals.inc);
             });
-    
-            ID > 0 ? percentage = Math.round((expenses[ID]/data.totals.exp) * 100) : percentage = 100;
-    
-            return percentage;
 
         },
 
@@ -143,6 +157,17 @@ var budgetController = (function() {
                 totalExp: data.totals.exp
 
             };
+        },
+
+        //return all the percentages of expenses
+        getPercentages: function() {
+
+            var percentages = data.allItems.exp.map(function(current) {
+                return current.getPercentage();
+            });
+
+            return percentages;
+
         }
 
     }
@@ -176,7 +201,7 @@ var UIController = (function() {
         },
 
         //add new row to either income or expense part
-        addListItem: function(object, type, individualExpense) {
+        addListItem: function(object, type) {
 
             var html, element, newHtml;
 
@@ -189,17 +214,13 @@ var UIController = (function() {
             else if (type === 'exp') {
                 element = DOMStrings.expensesContainer;
 
-                html = '<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">%expPercentage%</div><div class="item__delete"><button class="item__delete--btn"><i class="far fa-times-circle"></i></button></div></div></div>';
+                html = '<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="far fa-times-circle"></i></button></div></div></div>';
             }
 
             //replace the html placeholder with actual data
             newHtml = html.replace('%id%', object.id);
             newHtml = newHtml.replace('%description%', object.description);
             newHtml = newHtml.replace('%value%', object.value);
-
-            if (type === 'exp') {
-                newHtml = newHtml.replace('%expPercentage%', individualExpense + "%");
-            }
 
             //put the html in DOM
             document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
@@ -310,23 +331,18 @@ var appController = (function(budgetCtrl, UICtrl) {
             
             //create a new item 
             var newItem = budgetCtrl.addItem(inputs.type, inputs.description, inputs.value);
-
-            var individualExpense;
-
-            if (inputs.type === 'exp') {
-
-                individualExpense = budgetCtrl.calculateIndividualExpensePercentage(newItem.id);
-
-            }
     
             //pass the item to UI
-            UICtrl.addListItem(newItem, inputs.type, individualExpense);
+            UICtrl.addListItem(newItem, inputs.type);
     
             //clear the input field
             UICtrl.clearFields();
     
             //update the budget
             updateBudget();
+
+            //calculate and update percentage
+            calculatePercentages();
         }
 
     };
@@ -355,6 +371,9 @@ var appController = (function(budgetCtrl, UICtrl) {
             //reupdate the budget
             updateBudget();
 
+            //calculate and update percentage
+            calculatePercentages();
+
         }
 
 
@@ -371,6 +390,20 @@ var appController = (function(budgetCtrl, UICtrl) {
 
         //update the budget in UI
         UICtrl.displayBudget(budget);
+
+    };
+
+    //calculate individual expense percentage against total income
+    var calculatePercentages = function() {
+
+        //calculate percentage
+        budgetCtrl.calculatePercentages();
+
+        //get all the percentages
+        var percentages = budgetCtrl.getPercentages();
+
+        //display to the UI
+        console.log(percentages);
 
     };
 
